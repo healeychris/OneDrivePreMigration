@@ -919,18 +919,18 @@ Function Get-FolderSizeInfo {
  Batchname
  CreateFolderStructure
  CreateOutPutFiles
- #ActiveDirectoryModule
- #PSSessionActiveDirectory
- #MSonlineModule
- #SharePointModule
- #CheckTXTDataFile
- #AskForAdminCreds
- #ConnectMicrosoftOnline
- #ConnectMicrosoftSharePoint
- #ConnectToGCServer
- #FindAdminLogonID
- #CheckPermissions
- #ImportTXTData
- #ProcessUsers
+ ActiveDirectoryModule
+ PSSessionActiveDirectory
+ MSonlineModule
+ SharePointModule
+ CheckTXTDataFile
+ AskForAdminCreds
+ ConnectMicrosoftOnline
+ ConnectMicrosoftSharePoint
+ ConnectToGCServer
+ FindAdminLogonID
+ CheckPermissions
+ ImportTXTData
+ ProcessUsers
 
  WriteTransactionsLogs -Task "Checking ActiveDirectory  Module" -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 

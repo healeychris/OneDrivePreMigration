@@ -144,7 +144,7 @@ function CheckShareGateModule () {
 function CheckSharePNPModule () {
 
     WriteTransactionsLogs -Task "Checking Microsoft SharePointPNP Module"  -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false   
-    if (Get-Module -ListAvailable -Name PnP.PowerShell ) {
+    if (Get-Module -ListAvailable -Name SharePointPNOPowerShellOnline ) {
         WriteTransactionsLogs -Task "Found Microsoft SharePointPNP Module" -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 	
     } else {
         WriteTransactionsLogs -Task "Failed to locate Microsoft SharePointPNP Module, it needs to be installed" -Result Error -ErrorMessage "SharePointPNP Module not installed" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false

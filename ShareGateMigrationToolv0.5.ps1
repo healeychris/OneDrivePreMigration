@@ -23,7 +23,7 @@ $AdminSiteURL                            = "https://cnainsurance-admin.sharepoin
 $SharePointHomeURL                       = "https://cnainsurance.sharepoint.com"                                # Home base URL for SharePoint Online
 $ListName                                = "OneDriveProject"                                                    # Project site in SharePoint Online to store details  
 $host.ui.RawUI.WindowTitle               = "OneDrive Migration Script"                                          # Transaction Log Folder Name
-$CSVDataFile                             = '.\OneDriveMigrationList.csv'                                        # OneDrive Input File to check for users
+#$CSVDataFile                             = '.\OneDriveMigrationList.csv'                                        # OneDrive Input File to check for users
 $MigrationResultsFile                    = ".\ExportResults_$((get-date).ToString('yyyyMMdd_HHmm')).csv"        # Results file from Output
 $ProcessedUsers                          = 0
 $ErrorCount                              = 0
@@ -181,6 +181,10 @@ function CheckCSVDataFile () {
 
 # FUNCTION - Get TXT Data from File
 function ImportCSVData () {
+
+    # Find Latest Results CSV file in Batch\Report directory
+    $CSVDataFile = Get-ChildItem | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
+
 
     WriteTransactionsLogs -Task "Importing Data file................"   -Result Information none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false    
     try {$Global:OneDriveUsers = Import-Csv ".\$BatchesFolder\$BatchName\$CSVDataFile" -Delimiter "," -ea stop

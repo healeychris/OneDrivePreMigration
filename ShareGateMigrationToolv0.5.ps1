@@ -414,7 +414,7 @@ function WriteTransactionsLogs  {
 
 
 #### Funcion run order
-CheckSharePointModule
+#CheckSharePointModule
 CheckSharePNPModule 
 ImportModuleShareGate
 GetBatchname

@@ -414,11 +414,11 @@ function WriteTransactionsLogs  {
 
 
 #### Funcion run order
-GetBatchname
-GetBatchData
 CheckSharePointModule
 CheckSharePNPModule 
 ImportModuleShareGate
+GetBatchname
+GetBatchData
 ConnectMicrosoftSharePointPNP
 #CheckCSVDataFile
 #ImportCSVData

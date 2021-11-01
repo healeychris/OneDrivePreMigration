@@ -170,6 +170,10 @@ function ImportModuleShareGate () {
 # FUNCTION -  Check input file exists, terminate script if not
 function CheckCSVDataFile () {
 
+    
+    # Find Latest Results CSV file in Batch\Report directory
+    $CSVDataFile = Get-ChildItem | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
+
     WriteTransactionsLogs -Task "Checking CSV File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
     if (! (Test-Path ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile")) {
 	    WriteTransactionsLogs -Task "CSV File Check" -Result Error -ErrorMessage "CSV File Not found in expected location" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false
@@ -183,12 +187,8 @@ function CheckCSVDataFile () {
 # FUNCTION - Get TXT Data from File
 function ImportCSVData () {
 
-    # Find Latest Results CSV file in Batch\Report directory
-    $CSVDataFile = Get-ChildItem | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
-
-
     WriteTransactionsLogs -Task "Importing Data file................$CSVDataFile"   -Result Information none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false    
-    try {$Global:OneDriveUsers = Import-Csv ".\$BatchesFolder\$BatchName\$CSVDataFile" -Delimiter "," -ea stop
+    try {$Global:OneDriveUsers = Import-Csv ".\$BatchesFolder\$BatchName\$Reports\$CSVDataFile" -Delimiter "," -ea stop
         WriteTransactionsLogs -Task "Loaded Users Data"   -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError true
     } 
     catch {WriteTransactionsLogs -Task "Error loading Users data File" -Result Error -ErrorMessage "An error happened importing the data file, Please Check File" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false

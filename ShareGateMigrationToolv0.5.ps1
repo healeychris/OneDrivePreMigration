@@ -186,9 +186,9 @@ function ImportCSVData () {
     $CSVDataFile = Get-ChildItem | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
 
 
-    WriteTransactionsLogs -Task "Importing Data file................"   -Result Information none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false    
+    WriteTransactionsLogs -Task "Importing Data file................$CSVDataFile"   -Result Information none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false    
     try {$Global:OneDriveUsers = Import-Csv ".\$BatchesFolder\$BatchName\$CSVDataFile" -Delimiter "," -ea stop
-        WriteTransactionsLogs -Task "Loaded Users Data"   -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false
+        WriteTransactionsLogs -Task "Loaded Users Data"   -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError true
     } 
     catch {WriteTransactionsLogs -Task "Error loading Users data File" -Result Error -ErrorMessage "An error happened importing the data file, Please Check File" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false
         TerminateScript

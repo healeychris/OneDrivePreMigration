@@ -172,7 +172,7 @@ function CheckCSVDataFile () {
 
     
     # Find Latest Results CSV file in Batch\Report directory
-    $CSVDataFile = Get-ChildItem | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
+    $CSVDataFile = Get-ChildItem ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile" | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
 
     WriteTransactionsLogs -Task "Checking CSV File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
     if (! (Test-Path ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile")) {

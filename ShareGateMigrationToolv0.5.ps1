@@ -175,7 +175,7 @@ function CheckCSVDataFile () {
     $CSVDataFile = Get-ChildItem ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile" | Sort-Object -Descending -Property LastAccessTime | Select-Object -First 1 | Select-Object -ExpandProperty Name
 
     WriteTransactionsLogs -Task "Checking CSV File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
-    if (! (Test-Path ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile")) {
+    if (! (Test-Path ".\$BatchesFolder\$BatchName\$Reports\$CSVDataFile")) {
 	    WriteTransactionsLogs -Task "CSV File Check" -Result Error -ErrorMessage "CSV File Not found in expected location" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false
         TerminateScript
     } else {

@@ -23,7 +23,8 @@ $AdminSiteURL                            = "https://cnainsurance-admin.sharepoin
 $SharePointHomeURL                       = "https://cnainsurance.sharepoint.com"                                # Home base URL for SharePoint Online
 $ListName                                = "OneDriveProject"                                                    # Project site in SharePoint Online to store details  
 $host.ui.RawUI.WindowTitle               = "OneDrive Migration Script"                                          # Transaction Log Folder Name
-#$CSVDataFile                             = '.\OneDriveMigrationList.csv'                                        # OneDrive Input File to check for users
+#$CSVDataFile                            = '.\OneDriveMigrationList.csv'                                        # OneDrive Input File to check for users
+$Reports                                 = 'Reports'                                                            # Reports Dorectory
 $MigrationResultsFile                    = ".\ExportResults_$((get-date).ToString('yyyyMMdd_HHmm')).csv"        # Results file from Output
 $ProcessedUsers                          = 0
 $ErrorCount                              = 0
@@ -54,7 +55,7 @@ function GetBatchname () {
 function GetBatchData () {
 
     # Check if directory exists and has migration user list in
-    if (Test-Path ".\$BatchesFolder\$BatchName"){WriteTransactionsLogs -Task "Batch Folder Found"  -Result Error -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false}
+    if (Test-Path ".\$BatchesFolder\$BatchName"){WriteTransactionsLogs -Task "Batch Folder Found"  -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false}
 
     # Run Functions
     CheckCSVDataFile
@@ -170,7 +171,7 @@ function ImportModuleShareGate () {
 function CheckCSVDataFile () {
 
     WriteTransactionsLogs -Task "Checking CSV File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
-    if (! (Test-Path ".\$BatchesFolder\$BatchName\$CSVDataFile")) {
+    if (! (Test-Path ".\$BatchesFolder\$BatchName\$Report\$CSVDataFile")) {
 	    WriteTransactionsLogs -Task "CSV File Check" -Result Error -ErrorMessage "CSV File Not found in expected location" -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false
         TerminateScript
     } else {

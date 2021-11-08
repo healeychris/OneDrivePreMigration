@@ -30,8 +30,8 @@ $AdminSiteURL                            = "https://cnainsurance-admin.sharepoin
 $CheckSharePointProvision                = $true                                                                # Check if Provisioned in SharePoint (Slow process if enabled/true)
 $GetHomeDriveSize                        = $false                                                                # Calculate the size of the users HomeDirectory (Slow process if enabled/true) 
 $ProvisionSharePointContainer            = $false                                                                # Provision OneDrive container 
-$GCServer                                = 'vskau1s438.cna.com'                                                 # GC to be used to find user information
-$DCServer                                = 'vskau1s438'                                                         # DC to be used to find user information
+$GCServer                                = 'xxx'                                                 # GC to be used to find user information
+$DCServer                                = 'xxx'                                                         # DC to be used to find user information
 $UsePSSessionActiveDirectory             = $true                                                                # Use Active Directory module from Domain Controller
 
 # Migration Servers/Sites

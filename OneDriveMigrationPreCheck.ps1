@@ -7,7 +7,7 @@
     Organization: 	
     Filename:     	OneDrivePreCheck.ps1
     Project path:   https://
-    Version :       0.4
+    Version :       0.5
     ===========================================================================
     .DESCRIPTION
     This script is used check users before performing OneDrive Migrations. 
@@ -28,8 +28,8 @@ Clear-Host
 $MFALoginRequired                        = $true                                                                # Is MFA login required
 $AdminSiteURL                            = "https://cnainsurance-admin.sharepoint.com"                          # Admin URL for Tenant
 $CheckSharePointProvision                = $true                                                                # Check if Provisioned in SharePoint (Slow process if enabled/true)
-$GetHomeDriveSize                        = $true                                                                # Calculate the size of the users HomeDirectory (Slow process if enabled/true) 
-$ProvisionSharePointContainer            = $true                                                                # Provision OneDrive container 
+$GetHomeDriveSize                        = $false                                                                # Calculate the size of the users HomeDirectory (Slow process if enabled/true) 
+$ProvisionSharePointContainer            = $false                                                                # Provision OneDrive container 
 $GCServer                                = 'vskau1s438.cna.com'                                                 # GC to be used to find user information
 $DCServer                                = 'vskau1s438'                                                         # DC to be used to find user information
 $UsePSSessionActiveDirectory             = $true                                                                # Use Active Directory module from Domain Controller
@@ -39,6 +39,8 @@ $PittsburgDCList = 'Server1|Server2'
 $GreenfordDCList = 'Server3|Server4'
 $AuroraDCList    = 'kdenvr02|kreadr02|kcranr02|KPLNTR01|KAUSTR01|khousr01|KDGRVR01|kkansr01|KALBQR01|KCLBSR01|KDLUTR01|KSFRAR01|Klrckr01|KSYRCR01|KFHCCR01|khuntr01|KINDYR01|KELLCR01|KBOSTR01|kbre1r01|KALBYR01|KCHARR01|KGRPDR01|KCHVYR01|Kphnxr01|klosar01|KRICHR01|KPHILR01|KRCKHR01|KSEATR01|KPIT1R01|KLOUIR01|KOKCYR01|kyorkr01|KMILWR01|KMELVR01|kwashr01|KSLKCR01|KWHP1R01|klosnr01|kportr01|KSANDR01|kw2wpr01|KQNCYR01|KTAMPR01|KW2CGR01|KMTRIR01|kslccr01|KNVBRR01|KW2MNR01|kbirmr01|kminnr01|KPRSPR01|KW2VCR01|Kw2tor01|KSACRR01|KDALPR01|kch1r500|kmater02|kch1r400|kch1r100|kw7srr01|kch1r801|kch1r101|kch1r300|kch1r600'
 
+# Fix local issues
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 ######################## Do not change below #####################################################################################################
 
@@ -47,6 +49,8 @@ $TXTDataFile                             = '.\OneDriveUserList.txt'             
 $ExportResultsFile                       = ".\ExportResults_$((get-date).ToString('yyyyMMdd_HHmm')).csv"        # Results file from Output
 $MissingUsers                            = ".\NotFoundUsers.txt"                                                # Users excluded due to not been found in AD 
 $ReportFolder                            = 'Reports'                                                            # Folder containing the output reports
+$MigrationReports                        = 'MigrationReports'
+$ShareGateReportsExport                  = 'ShareGateReports'                                                   # Sharegate Directory for export reports
 #$GCServer                               = 'BGB01DC1181.national.core.bbc.co.uk:3268'                           # GC to be used to find user information
 $Location                                = Get-Location | Select-Object -ExpandProperty path                    # Current running directory
 $ErrorCount                              = 0                                                                    # Counters to record errors
@@ -55,6 +59,9 @@ $RequireConnectMicrosoftSharePoint       = $True
 $RequireConnectMicrosoftOnline           = $True
 $BatchesFolder   		                 = 'Batches'                                                            # Root Folder name
 $LogsFolder                              = 'Log'                                                                # Log Files to store details in
+$FailedFolder                            = 'Failed'                                                             # Failed Reports / Users
+$PreMigrationReports                     = 'PreMigrationReports'                                                # PreMigrationReports Folder
+$ExcludeListFile                         ='.\ExcludeUsers.txt'                                                  # List of Users to exclude by SAmaccountName
 
 
                                                                 
@@ -108,46 +115,60 @@ function CreateFolderStructure () {
 
     # Check that the BatchesFolder exists, create it if not
     if (! (Test-Path ".\$BatchesFolder\$BatchName")) {
-        Write-Host "Creating "$BatchName" sub-folder..."
+        #Write-Host "Creating "$BatchName" sub-folder..."
 		new-item -path .\ -name ".\$BatchesFolder\$BatchName" -type directory | out-null
     }
 
     
     # Check that the $LogsFolder exists, create it if not
     if (! (Test-Path ".\$BatchesFolder\$BatchName\$LogsFolder")) {
-        Write-Host "Creating '$LogsFolder' sub-folder..."
+        #Write-Host "Creating '$LogsFolder' sub-folder..."
         new-item -path .\ -name ".\$BatchesFolder\$BatchName\$LogsFolder" -type directory | out-null
     }
        
    
     # Check that the FailedFolder exists, create it if not
     if (! (Test-Path ".\$BatchesFolder\$BatchName\$FailedFolder")) {
-        Write-Host "Creating '$FailedFolder' sub-folder..."
+        #Write-Host "Creating '$FailedFolder' sub-folder..."
         new-item -path .\ -name ".\$BatchesFolder\$BatchName\$FailedFolder" -type directory | out-null
     }
 
         # Check that the ReportFolder exists, create it if not
-    if (! (Test-Path ".\$BatchesFolder\$BatchName\$ReportFolder")) {
-        Write-Host "Creating '$ReportFolder' sub-folder..."
+    if (! (Test-Path ".\$BatchesFolder\$BatchName\$PreMigrationReports")) {
+        #Write-Host "Creating '$ReportFolder' sub-folder..."
         new-item -path .\ -name ".\$BatchesFolder\$BatchName\$ReportFolder" -type directory | out-null
+    }
+
+      # Check that the ShareGate Reports directory exists, create it if not
+    if (! (Test-Path ".\$BatchesFolder\$BatchName\$ShareGateReportsExport")) {
+        #Write-Host "Creating '$ShareGateReportsExport' sub-folder..."
+        new-item -path .\ -name ".\$BatchesFolder\$BatchName\$ShareGateReportsExport" -type directory | out-null
+    }
+
+          # Check that the Migration Reports directory exists, create it if not
+    if (! (Test-Path ".\$BatchesFolder\$BatchName\$MigrationReports")) {
+        #Write-Host "Creating '$MigrationReports' sub-folder..."
+        new-item -path .\ -name ".\$BatchesFolder\$BatchName\$MigrationReports" -type directory | out-null
     }
     
 }
 
 
 
+
+
 function CreateOutPutFiles () {
 
     # Results file
-	if (! (Test-Path ".\$BatchesFolder\$BatchName\$ExportResultsFile")) {
-		New-Item -Path . -Name ".\$BatchesFolder\$BatchName\$ExportResultsFile" -ItemType "file" -Value 'UserFoundInAD,Displayname,UserPrincipalName,HomeDirectory,SharePointLicence,OneDriveProvisioned,OneDriveCurrentSize,OneDriveURL,PerferredMigrationServer,IdentifiedHomeDrive,HomeDirectorySize,HomeDirectoryNumFiles,SamaccountName' -Force | Out-Null
-		Add-Content -path ".\$BatchesFolder\$BatchName\$ExportResultsFile" -value ""
+	if (! (Test-Path ".\$BatchesFolder\$BatchName\$ReportFolder\$ExportResultsFile")) {
+		New-Item -Path . -Name ".\$BatchesFolder\$BatchName\$ReportFolder\$ExportResultsFile" -ItemType "file" -Value 'UserFoundInAD,Displayname,UserPrincipalName,HomeDirectory,SharePointLicence,OneDriveProvisioned,OneDriveCurrentSize,OneDriveURL,PerferredMigrationServer,IdentifiedHomeDrive,HomeDirectorySize,HomeDirectoryNumFiles,SamaccountName' -Force | Out-Null
+		Add-Content -path ".\$BatchesFolder\$BatchName\$ReportFolder\$ExportResultsFile" -value ""
 	}
 
     # Missing Users File
-	if (! (Test-Path ".\$BatchesFolder\$BatchName\$MissingUsers")) {
-		New-Item -Path . -Name ".\$BatchesFolder\$BatchName\$MissingUsers" -ItemType "file" -Value 'SAMaccountName' | Out-Null
-		Add-Content -path ".\$BatchesFolder\$BatchName\$MissingUsers" -value ""
+	if (! (Test-Path ".\$BatchesFolder\$BatchName\$FailedFolder\$MissingUsers")) {
+		New-Item -Path . -Name ".\$BatchesFolder\$BatchName\$FailedFolder\$MissingUsers" -ItemType "file" -Value 'SAMaccountName' | Out-Null
+		Add-Content -path ".\$BatchesFolder\$BatchName\$FailedFolder\$MissingUsers" -value ""
 	}
 
 
@@ -193,8 +214,10 @@ function PSSessionActiveDirectory () {
     if ($true -eq $UsePSSessionActiveDirectory){
 
         WriteTransactionsLogs -Task "Connecting to $DCServer for Active Directory Module" -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
-        try {$session = New-PSSession -ComputerName $DCserver -Authentication Kerberos -WarningAction  SilentlyContinue -ea STOP 
-            Import-PSSession -Session $session -Module ActiveDirectory
+        try {$PSSessions = Get-PSSession
+            if ($PSSessions | Where-Object {$_.Computername -eq $DCServer}) {Remove-PSSession -ComputerName $DCServer} # Used to clear the existing session if exists
+            $session = New-PSSession -ComputerName $DCserver -Authentication Kerberos -WarningAction  SilentlyContinue -ea STOP 
+            Import-PSSession -Session $session -Module ActiveDirectory | Out-Null
             WriteTransactionsLogs -Task "Loaded Active Directory Module" -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
         }
         Catch {WriteTransactionsLogs -Task "Could not load or connect for Active Directory Module" -Result ERROR -ErrorMessage "PS Session Failed: $error[0].Exception.message " -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false 
@@ -316,6 +339,10 @@ function CheckTXTDataFile () {
         TerminateScript
     } else {
         WriteTransactionsLogs -Task "Found TXT File..............."    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
+
+        # Store a copy of the userlist in the Batch folder for reference
+        $MigrationFileUsed = ".\$BatchesFolder\$BatchName\$TXTDataFile" + "_OriginalList.txt"
+        Copy-Item $TXTDataFile $MigrationFileUsed
     }
 }
 
@@ -355,6 +382,39 @@ function ConnectToGCServer () {
 }
 
 
+# FUNCTION - Check Exclude User list
+function CheckExcludeList () {
+
+    WriteTransactionsLogs -Task "Checking For Exclude List File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
+    if (! (Test-Path $ExcludeListFile)) {
+	    WriteTransactionsLogs -Task "Exclude List File Check" -Result Information -ErrorMessage "Exclude File Not found in expected location" -ShowScreenMessage true -ScreenMessageColour YELLOW -IncludeSysError false
+        $ExcludeListFileNotFound = $false
+    } else {
+        WriteTransactionsLogs -Task "Exclude List File Check Located..........."    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
+    }
+}
+
+# FUNCTION - Import Exclude User list
+function ImportExcludeList () {
+
+    if ($null -eq $ExcludeListFileNotFound){
+       WriteTransactionsLogs -Task "Importing Exclude List File............"    -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
+        
+        try {$Global:ExcludeListUsers =  Get-content $ExcludeListFile
+            $ExcludeListUsersCount = $ExcludeListUsers.count
+            WriteTransactionsLogs -Task "Imported Exclude List File and has $ExcludeListUsersCount Users listed!"    -Result Warning -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour YELLOW -IncludeSysError false}
+        
+        Catch {WriteTransactionsLogs -Task "Imported Exclude List Failed, Job will Continue"    -Result Error -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour RED -IncludeSysError false
+              $ExcludeListFileNotFound = $false}
+
+    }
+
+}
+
+
+
+
+
 # FUNCTION - Process Users
 function ProcessUsers () {
 
@@ -383,8 +443,9 @@ function ProcessUsers () {
         $UserUPN       = ''
         
         # Change location to AD
-       # Set-Location AD2:
-        
+        # Set-Location AD2:
+
+               
         # Find AD user Info and Store to var
         $ADUserInfo = Get-Aduser -LDAPFilter "(SamaccountName=$UserObject)"  -Properties *
         
@@ -395,7 +456,7 @@ function ProcessUsers () {
         if ($null -eq $ADUserInfo){$UserFoundInAD = "$false"
             WriteTransactionsLogs -Task "$UserObject Not found in AD" -Result information -ShowScreenMessage true -ScreenMessageColour Yellow -IncludeSysError false
             $UserValid = $false
-            $UserObject | out-file $MissingUsers -Encoding ASCII -Append
+            $UserObject | out-file ".\$BatchesFolder\$BatchName\$FailedFolder\$MissingUsers" -Encoding ASCII -Append
         } Else {
             $UserFoundInAD = "$true"
             # Build Simple String
@@ -408,8 +469,22 @@ function ProcessUsers () {
             $host.ui.RawUI.WindowTitle = "OneDrive PreCheck Script - Processing $DisplayName"
             $ADUserInfo | Add-Member -MemberType NoteProperty -Name UserFoundInAD -Value $true -Force
             $UserValid = $true
+            
         }
         #endregion GetADUserInfo
+
+
+
+         # Remove User if found on exclude list 
+         #region CheckAgainstExcludeList
+        if ($null -eq $ExcludeListFileNotFound){
+            
+            # Compare exclude list with current user
+            If ($ExcludeListUsers -contains "$UserObject") {$UserValid = $false
+                WriteTransactionsLogs -Task "$UserObject found in exclude list and Remove from processing" -Result information -ShowScreenMessage true -ScreenMessageColour Yellow -IncludeSysError false}
+        }
+
+        #endregion CheckAgainstExcludeList
 
 
         # Check if User has a HomeDrive mapped in Active Directory and get server location
@@ -571,7 +646,7 @@ function ProcessUsers () {
         #region ExportResults
         
         If ($UserValid -eq $true){
-            $ADUserInfo |  Select-Object UserFoundInAD,Displayname,UserPrincipalName,HomeDirectory,SharePointLicence,OneDriveProvisioned,OneDriveCurrentSize,OneDriveURL,PerferredMigrationServer,IdentifiedHomeDrive,HomeDirectorySize,HomeDirectoryNumFiles,SamaccountName |export-csv "$ReportFolder\$ExportResultsFile" -NoTypeInformation -Append
+            $ADUserInfo |  Select-Object UserFoundInAD,Displayname,UserPrincipalName,HomeDirectory,SharePointLicence,OneDriveProvisioned,OneDriveCurrentSize,OneDriveURL,PerferredMigrationServer,IdentifiedHomeDrive,HomeDirectorySize,HomeDirectoryNumFiles,SamaccountName |export-csv ".\$BatchesFolder\$BatchName\$ReportFolder\$ExportResultsFile" -NoTypeInformation -Append
              Write-host "################## Completed OneDrive Check for $Displayname ################## " -ForegroundColor YELLOW
              Write-host ''
              $CompletedCount ++
@@ -927,10 +1002,12 @@ Function Get-FolderSizeInfo {
  AskForAdminCreds
  ConnectMicrosoftOnline
  ConnectMicrosoftSharePoint
- ConnectToGCServer
+ #ConnectToGCServer
  FindAdminLogonID
  CheckPermissions
  ImportTXTData
+ CheckExcludeList
+ ImportExcludeList 
  ProcessUsers
 
- WriteTransactionsLogs -Task "Checking ActiveDirectory  Module" -Result Information -ErrorMessage none -ShowScreenMessage true -ScreenMessageColour GREEN -IncludeSysError false 
+ 

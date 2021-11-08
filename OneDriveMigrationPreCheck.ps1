@@ -37,7 +37,8 @@ $UsePSSessionActiveDirectory             = $true                                
 # Migration Servers/Sites
 $PittsburgDCList = 'Server1|Server2'
 $GreenfordDCList = 'Server3|Server4'
-$AuroraDCList    = 'kdenvr02|kreadr02|kcranr02|KPLNTR01|KAUSTR01|khousr01|KDGRVR01|kkansr01|KALBQR01|KCLBSR01|KDLUTR01|KSFRAR01|Klrckr01|KSYRCR01|KFHCCR01|khuntr01|KINDYR01|KELLCR01|KBOSTR01|kbre1r01|KALBYR01|KCHARR01|KGRPDR01|KCHVYR01|Kphnxr01|klosar01|KRICHR01|KPHILR01|KRCKHR01|KSEATR01|KPIT1R01|KLOUIR01|KOKCYR01|kyorkr01|KMILWR01|KMELVR01|kwashr01|KSLKCR01|KWHP1R01|klosnr01|kportr01|KSANDR01|kw2wpr01|KQNCYR01|KTAMPR01|KW2CGR01|KMTRIR01|kslccr01|KNVBRR01|KW2MNR01|kbirmr01|kminnr01|KPRSPR01|KW2VCR01|Kw2tor01|KSACRR01|KDALPR01|kch1r500|kmater02|kch1r400|kch1r100|kw7srr01|kch1r801|kch1r101|kch1r300|kch1r600'
+$AuroraDCList = Get-Content .\ServerList.txt
+
 
 # Fix local issues
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
